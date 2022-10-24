@@ -34,10 +34,9 @@ class BeikeErshoufangSpider(scrapy.Spider):
 
     def start_requests(self):
         size = 0
-        base = time.time()
         for key in districtDic.keys():
-            time.sleep(base + size * district_time_base)
-            yield scrapy.Request('http://bj.ke.com/ershoufang/{}'.format(key), self.districtPage)
+            me = {'delay_request_by': 5}
+            yield scrapy.Request('http://bj.ke.com/ershoufang/{}'.format(key), self.districtPage, meta= me)
             size = size + 1
             # TODO 删了
             #return
@@ -49,7 +48,6 @@ class BeikeErshoufangSpider(scrapy.Spider):
         except Exception as e:
             self.logger.error(e)
         subDistrictResultList = response.css('dd div > a') 
-        base = time.time()
         size = 0
         for subDistrict in subDistrictResultList:
             urlPath = subDistrict.xpath("@href").extract_first()
@@ -65,8 +63,8 @@ class BeikeErshoufangSpider(scrapy.Spider):
                     try:
                         subDistrictUrl = 'http://bj.ke.com/ershoufang/{}'.format(subDistrict[2])
                         self.logger.info("districtPage urlPath:%s is subDistrict, subDistrictUrl:%s to be crawl", urlPath, subDistrictUrl)
-                        time.sleep(base + size * sub_district_time_bas)
-                        yield scrapy.Request(subDistrictUrl, self.subDistrictPage)
+                        me = {'delay_request_by': 6}
+                        yield scrapy.Request(subDistrictUrl, self.subDistrictPage, meta=me)
                         size = size + 1
                         # TODO 删了
                         # return
@@ -84,12 +82,11 @@ class BeikeErshoufangSpider(scrapy.Spider):
         houseSize = response.css('.leftContent > div > .clear > .fl > span::text').get()
         pageSize = int(int(houseSize) / 30) + 1
         self.logger.info("板块：" + subDistrict + "，房屋数量：" + str(houseSize) + "，房屋页数：" + str(pageSize))
-        base = time.time()
         size = 0
         for i in range(1, (pageSize + 1)):   
             subDistrictSubPageUrl = 'http://bj.ke.com/ershoufang/' + subDistrict + "/pg" + str(i)
-            time.sleep(base + size * sub_district_page_time_base)
-            yield scrapy.Request(subDistrictSubPageUrl, self.subDistrictSubPage)
+            me = {'delay_request_by': 7}
+            yield scrapy.Request(subDistrictSubPageUrl, self.subDistrictSubPage, meta= me)
             size = size + 1
             # TODO 删了
             # return

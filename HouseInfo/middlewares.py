@@ -69,16 +69,14 @@ class HouseinfoDownloaderMiddleware:
         return s
 
     def process_request(self, request, spider):
-        # Called for each request that goes through the downloader
-        # middleware.
+        delay_s = request.meta.get('delay_request_by', None)
+        if not delay_s:
+            return
 
-        # Must either:
-        # - return None: continue processing this request
-        # - or return a Response object
-        # - or return a Request object
-        # - or raise IgnoreRequest: process_exception() methods of
-        #   installed downloader middleware will be called
-        return None
+        self.logger.info("process_request delay_s:%i", delay_s)
+        deferred = Deferred()
+        reactor.callLater(delay_s, deferred.callback, None)
+        return deferred
 
     def process_response(self, request, response, spider):
         # Called with the response returned from the downloader.
