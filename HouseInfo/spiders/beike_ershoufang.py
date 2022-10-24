@@ -1,5 +1,6 @@
 import scrapy
 from HouseInfo.items import HouseinfoItem
+import time
 
 districtDic = {
     'dongcheng': '东城', 
@@ -21,15 +22,25 @@ districtDic = {
     'yanqing': '延庆' 
 }
 
+district_time_base = 2000
+
+sub_district_time_base = 200
+
+sub_district_page_time_base = 10
+
 class BeikeErshoufangSpider(scrapy.Spider):
     name = 'beike-ershoufang'
     allowed_domains = ['bj.ke.com']
 
     def start_requests(self):
+        size = 0
+        base = time.time()
         for key in districtDic.keys():
+            time.sleep(base + size * district_time_base)
             yield scrapy.Request('http://bj.ke.com/ershoufang/{}'.format(key), self.districtPage)
+            size = size + 1
             # TODO 删了
-            return
+            #return
 
     def districtPage(self, response):
         try:
@@ -38,6 +49,8 @@ class BeikeErshoufangSpider(scrapy.Spider):
         except Exception as e:
             self.logger.error(e)
         subDistrictResultList = response.css('dd div > a') 
+        base = time.time()
+        size = 0
         for subDistrict in subDistrictResultList:
             urlPath = subDistrict.xpath("@href").extract_first()
             if ("ershoufang" in urlPath):
@@ -52,9 +65,11 @@ class BeikeErshoufangSpider(scrapy.Spider):
                     try:
                         subDistrictUrl = 'http://bj.ke.com/ershoufang/{}'.format(subDistrict[2])
                         self.logger.info("districtPage urlPath:%s is subDistrict, subDistrictUrl:%s to be crawl", urlPath, subDistrictUrl)
+                        time.sleep(base + size * sub_district_time_bas)
                         yield scrapy.Request(subDistrictUrl, self.subDistrictPage)
+                        size = size + 1
                         # TODO 删了
-                        return
+                        # return
                     except Exception as e:
                         self.logger.error(e)
             else:
@@ -69,11 +84,15 @@ class BeikeErshoufangSpider(scrapy.Spider):
         houseSize = response.css('.leftContent > div > .clear > .fl > span::text').get()
         pageSize = int(int(houseSize) / 30) + 1
         self.logger.info("板块：" + subDistrict + "，房屋数量：" + str(houseSize) + "，房屋页数：" + str(pageSize))
+        base = time.time()
+        size = 0
         for i in range(1, (pageSize + 1)):   
             subDistrictSubPageUrl = 'http://bj.ke.com/ershoufang/' + subDistrict + "/pg" + str(i)
+            time.sleep(base + size * sub_district_page_time_base)
             yield scrapy.Request(subDistrictSubPageUrl, self.subDistrictSubPage)
+            size = size + 1
             # TODO 删了
-            return
+            # return
     
     def subDistrictSubPage(self, response):
         try:
@@ -98,7 +117,7 @@ class BeikeErshoufangSpider(scrapy.Spider):
             else:   
                 self.logger.info("subDistrictSubPage is old house")
             # TODO 删了
-            return
+            # return
 
     def detail_page(self, response):
         splitResult = response.url.split("/")
