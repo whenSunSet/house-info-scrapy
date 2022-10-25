@@ -1,4 +1,5 @@
 import scrapy
+from HouseInfo.items import HouseinfoItem
 
 districtDic = {
     'dongcheng': '东城', 
@@ -109,7 +110,19 @@ class BeikeErshoufangSimpleSpider(scrapy.Spider):
             objectId = ""
             if (objectId == ""):
                 self.logger.info("subDistrictSubPage is new house")
-                # yield scrapy.Request(houseUrl, self.detail_page)
+                houseInfo = HouseinfoItem(
+                    roomId = roomId,
+                    url = houseUrl,
+                    title = houseTitle,
+                    totalPrice = price,
+                    area = area,
+                    city = "beijing",
+                    district = "",
+                    subDistrict = subDistrict,
+                    community = community,
+                    online = True,
+                    )
+                yield houseInfo 
             else:   
                 self.logger.info("subDistrictSubPage is old house")
             # TODO 删了
