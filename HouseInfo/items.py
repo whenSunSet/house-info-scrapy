@@ -31,4 +31,5 @@ class HouseinfoItem(scrapy.Item):
     houseUsage = scrapy.Field()
     mortgageInfo = scrapy.Field()
     houseSellTime = scrapy.Field()
+    isZuFang = scrapy.Field()
     pass

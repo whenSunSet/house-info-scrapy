@@ -56,7 +56,7 @@ class BeikeErshoufangSimpleSpider(scrapy.Spider):
                         subDistrictUrl = 'https://bj.ke.com/ershoufang/{}'.format(subDistrict[2]) + "/"
                         yield scrapy.Request(subDistrictUrl, self.subDistrictPage)
                         # TODO 删了
-                        return
+                        # return
                     except Exception as e:
                         self.logger.error(e)
         
@@ -96,7 +96,6 @@ class BeikeErshoufangSimpleSpider(scrapy.Spider):
 
             if (area == 0):
                 self.logger.error("subDistrictSubPage area error areaList:%s", areaList)
-            self.logger.error("subDistrictSubPage area error areaList:%s", areaList)
             index = index + 1
             objectId = ""
             if (objectId == ""):
@@ -111,6 +110,7 @@ class BeikeErshoufangSimpleSpider(scrapy.Spider):
                     subDistrict = subDistrict,
                     community = community,
                     online = True,
+                    isZuFang = False
                     )
                 yield houseInfo 
             else:   

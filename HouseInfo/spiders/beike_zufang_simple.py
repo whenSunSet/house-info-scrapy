@@ -114,6 +114,7 @@ class BeikeZufangSimpleSpider(scrapy.Spider):
                     subDistrict = subDistrict,
                     community = community,
                     online = True,
+                    isZuFang = True
                     )
                 yield houseInfo 
             else:   
