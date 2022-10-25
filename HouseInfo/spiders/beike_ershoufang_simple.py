@@ -32,65 +32,54 @@ class BeikeErshoufangSimpleSpider(scrapy.Spider):
 
     def start_requests(self):
         for key in districtDic.keys():
-            yield scrapy.Request('https://bj.ke.com/ershoufang/{}'.format(key) + "/", self.districtPage)
+            url = 'https://bj.ke.com/ershoufang/{}'.format(key) + "/"
+            yield scrapy.Request(url, self.districtPage)
             # TODO 删了
             return
 
     def districtPage(self, response):
-        try:
-            district = response.url.split("/")[4]
-            self.logger.info("districtPage district:%s", district)
-        except Exception as e:
-            self.logger.error(e)
+        self.logger.info("districtPage 城区:%s 开始爬取", response.url)
         subDistrictResultList = response.css('dd div > a') 
+        if (len(subDistrictResultList) == 0):
+            self.logger.error("districtPage %s 没有数据", response.url)
         for subDistrict in subDistrictResultList:
             urlPath = subDistrict.xpath("@href").extract_first()
-            self.logger.info("districtPage urlPath:%s", urlPath)
             if ("ershoufang" in urlPath):
                 isCity = False
                 for key in districtDic.keys():
                     isCity = (("/" + key + "/") in urlPath)
                     if isCity:
-                        self.logger.info("districtPage urlPath:%s is district", urlPath)
                         break
                 if not isCity:
                     subDistrict = urlPath.split("/")
                     try:
                         subDistrictUrl = 'https://bj.ke.com/ershoufang/{}'.format(subDistrict[2]) + "/"
-                        self.logger.info("districtPage urlPath:%s is subDistrict, subDistrictUrl:%s to be crawl", urlPath, subDistrictUrl)
                         yield scrapy.Request(subDistrictUrl, self.subDistrictPage)
                         # TODO 删了
                         return
                     except Exception as e:
                         self.logger.error(e)
-            else:
-                self.logger.info("districtPage urlPath:%s not ershoufang", urlPath)
         
     def subDistrictPage(self, response):
         try:
             subDistrict = response.url.split("/")[4]
-            self.logger.info("subDistrictPage subDistrict:%s", subDistrict)
         except Exception as e:
             self.logger.error(e)
         houseSize = response.css('.leftContent > div > .clear > .fl > span::text').get()
         pageSize = int(int(houseSize) / 30) + 1
         self.logger.info("板块：" + subDistrict + "，房屋数量：" + str(houseSize) + "，房屋页数：" + str(pageSize))
         for i in range(1, (pageSize + 1)):   
-            subDistrictSubPageUrl = 'https://bj.ke.com/ershoufang/' + subDistrict + "/pg" + str(i) + "/"
+            # subDistrictSubPageUrl = 'https://bj.ke.com/ershoufang/' + subDistrict + "/pg" + str(i) + "/"
+            subDistrictSubPageUrl = 'https://bj.ke.com/ershoufang/yangzhuang1/pg10/'
             yield scrapy.Request(subDistrictSubPageUrl, self.subDistrictSubPage)
             # TODO 删了
-            # return
+            return
     
     def subDistrictSubPage(self, response):
-        try:
-            subDistrictSubPage = response.url.split("/")[4]
-            self.logger.info("subDistrictSubPage subDistrictSubPageUrl:%s", subDistrictSubPage)
-        except Exception as e:
-            self.logger.error(e)
         subDistrict = response.css('.leftContent > div > .clear > .fl > a::text').get().replace("二手房", "")
         priceItems = response.css('.totalPrice2 > span')
         communityItems = response.css('.flood a')
-        houseSimpleInfoItems = response.css('.houseInfo::text')
+        houseSimpleInfoItems = response.css('.houseInfo')
         index = 0
         for eachHouseInfo in response.css('.title > .maidian-detail'):
             houseUrl = eachHouseInfo.xpath("@href").extract_first()
@@ -103,13 +92,14 @@ class BeikeErshoufangSimpleSpider(scrapy.Spider):
             area = 0
             for mayArea in areaList:
                 if ("平米" in mayArea):
-                    area = mayArea.replace("平米", "")
+                    area = float(mayArea.strip().replace("平米", "").replace("\n", ""))
 
-            self.logger.info("subDistrictSubPage houseUrl:%s, roomId:%s, price:%i, community:%s, houseTitle:%s, area:%s, subDistrict:%s", houseUrl, roomId, price, community, houseTitle, area, subDistrict)
+            if (area == 0):
+                self.logger.error("subDistrictSubPage area error areaList:%s", areaList)
+            self.logger.error("subDistrictSubPage area error areaList:%s", areaList)
             index = index + 1
             objectId = ""
             if (objectId == ""):
-                self.logger.info("subDistrictSubPage is new house")
                 houseInfo = HouseinfoItem(
                     roomId = roomId,
                     url = houseUrl,
